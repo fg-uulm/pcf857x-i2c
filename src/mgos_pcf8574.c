@@ -202,9 +202,13 @@ bool mgos_pcf8574_gpio_set_mode(struct mgos_pcf8574 *dev, int pin, enum mgos_gpi
   }
   if (mode == MGOS_GPIO_MODE_INPUT) {
     dev->_io |= (1 << pin);
+    // If the pin is an input, initialize it as HIGH
+    dev->_write |= (1 << pin);
+    mgos_pcf8574_write(dev);
   } else {
     dev->_io &= ~(1 << pin);
   }
+
   return true;
 }
 
