@@ -28,15 +28,25 @@ extern "C" {
 // Registers
 #define MGOS_PCF8574_REG_CONFIG    (0x00)
 
-struct mgos_pcf8574 {
-  struct mgos_i2c *       i2c;
-  uint8_t                 i2caddr;
+struct mgos_pcf8574_cb {
+  mgos_gpio_int_handler_f fn;
+  void *                  fn_arg;
+  double                  last;
+  int                     debounce_ms;
+  bool                    enabled;
+  bool                    firing;
+  enum mgos_gpio_int_mode mode;
+};
 
-  uint8_t                 _read;                     // Last read from device
-  uint8_t                 _write;                    // Last write to device
-  uint8_t                 _io;                       // each bit signals pin in INPUT (1) or OUTPUT (0)
-  int                     int_gpio;                  // Interrupt pin from device
-  mgos_gpio_int_handler_f int_cb[MGOS_PCF8574_PINS]; // callback for {int,button}_handler()
+struct mgos_pcf8574 {
+  struct mgos_i2c *      i2c;
+  uint8_t                i2caddr;
+
+  uint8_t                _read;                      // Last read from device
+  uint8_t                _write;                     // Last write to device
+  uint8_t                _io;                        // each bit signals pin in INPUT (1) or OUTPUT (0)
+  int                    int_gpio;                   // Interrupt pin from device
+  struct mgos_pcf8574_cb cb[MGOS_PCF8574_PINS];
 };
 
 /* Mongoose OS initializer */

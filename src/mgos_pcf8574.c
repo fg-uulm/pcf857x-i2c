@@ -57,10 +57,13 @@ static bool mgos_pcf8574_read(struct mgos_pcf8574 *dev) {
 }
 
 static bool mgos_pcf8574_write(struct mgos_pcf8574 *dev) {
+  uint8_t val;
+
   if (!dev) {
     return false;
   }
-  if (!mgos_i2c_read(dev->i2c, dev->i2caddr, &dev->_write, 1, true)) {
+  val = dev->_write;
+  if (!mgos_i2c_read(dev->i2c, dev->i2caddr, &val, 1, true)) {
     return false;
   }
 
@@ -70,7 +73,7 @@ static bool mgos_pcf8574_write(struct mgos_pcf8574 *dev) {
 
 static void mgos_pcf8574_irq(int pin, void *arg) {
   struct mgos_pcf8574 *dev = (struct mgos_pcf8574 *)arg;
-  uint8_t prev_read;
+  uint8_t prev_read, this_read;
 
   if (!dev) {
     return;
@@ -80,11 +83,69 @@ static void mgos_pcf8574_irq(int pin, void *arg) {
   }
   LOG(LL_INFO, ("Interrupt!"));
   mgos_pcf8574_print(dev);
-  prev_read = dev->_read;
+  prev_read = dev->_read & dev->_io;
   mgos_pcf8574_read(dev);
+  this_read = dev->_read & dev->_io;
 
-  // TODO(pim): Look for bits in prev_read that differ from dev->_read and issue callbacks
-  if (prev_read == dev->_read) {
+  if (prev_read != this_read) {
+    uint8_t n;
+    char    prev[9], this[9];
+    for (n = 0; n < 8; n++) {
+      prev[n] = (prev_read & (1 << n)) ? '*' : '.';
+      this[n] = (this_read & (1 << n)) ? '*' : '.';
+    }
+    prev[8] = this[8] = 0;
+    LOG(LL_INFO, ("prev=%s this=%s", prev, this));
+
+    for (n = 0; n < 8; n++) {
+      bool prev_bit  = prev_read & (1 << n);
+      bool this_bit  = this_read & (1 << n);
+      bool will_call = false;
+      switch (dev->cb[n].mode) {
+      case MGOS_GPIO_INT_EDGE_POS:
+        if (!prev_bit && this_bit) {
+          will_call = true;
+        }
+        break;
+
+      case MGOS_GPIO_INT_EDGE_NEG:
+        if (prev_bit && !this_bit) {
+          will_call = true;
+        }
+        break;
+
+      case MGOS_GPIO_INT_EDGE_ANY:
+        if (prev_bit != this_bit) {
+          will_call = true;
+        }
+        break;
+
+      case MGOS_GPIO_INT_LEVEL_HI:
+        if (this_bit) {
+          will_call = true;
+        }
+        break;
+
+      case MGOS_GPIO_INT_LEVEL_LO:
+        if (!this_bit) {
+          will_call = true;
+        }
+        break;
+
+      default:
+        return;
+      }
+      LOG(LL_INFO, ("GPIO[%u] prev_bit=%u this_bit=%u will_call=%u", n, prev_bit, this_bit, will_call));
+      if (will_call && dev->cb[n].enabled) {
+        dev->cb[n].firing = true;
+        dev->cb[n].last   = mg_time();
+        if (dev->cb[n].fn) {
+          LOG(LL_INFO, ("GPIO[%u] callback issued", n));
+          dev->cb[n].fn(n, dev->cb[n].fn_arg);
+        }
+        dev->cb[n].firing = false;
+      }
+    }
     return;
   }
   return;
@@ -111,6 +172,7 @@ struct mgos_pcf8574 *mgos_pcf8574_create(struct mgos_i2c *i2c, uint8_t i2caddr, 
   dev->i2caddr  = i2caddr;
   dev->i2c      = i2c;
   dev->_write   = 0xff; // Set all pins HIGH
+  dev->_io      = 0xff; // Set all pins to INPUT
   dev->int_gpio = int_gpio;
   if (!mgos_pcf8574_write(dev)) {
     free(dev);
@@ -190,34 +252,36 @@ bool mgos_pcf8574_gpio_set_int_handler(struct mgos_pcf8574 *dev, int pin, enum m
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
-  LOG(LL_ERROR, ("Not implemented yet"));
-  return false;
-  (void) mode;
-  (void) cb;
-  (void) arg;
+  dev->cb[pin].fn     = cb;
+  dev->cb[pin].fn_arg = arg;
+  dev->cb[pin].mode   = mode;
+  return true;
+
+  (void)mode;
 }
 
 bool mgos_pcf8574_gpio_enable_int(struct mgos_pcf8574 *dev, int pin) {
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
-  LOG(LL_ERROR, ("Not implemented yet"));
-  return false;
+  dev->cb[pin].enabled = true;
+  return true;
 }
 
 bool mgos_pcf8574_gpio_disable_int(struct mgos_pcf8574 *dev, int pin) {
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
-  LOG(LL_ERROR, ("Not implemented yet"));
-  return false;
+  dev->cb[pin].enabled = false;
+  return true;
 }
 
 void mgos_pcf8574_gpio_clear_int(struct mgos_pcf8574 *dev, int pin) {
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return;
   }
-  LOG(LL_ERROR, ("Not implemented yet"));
+  dev->cb[pin].firing = false;
+  dev->cb[pin].last   = 0.f;
   return;
 }
 
@@ -225,23 +289,25 @@ void mgos_pcf8574_gpio_remove_int_handler(struct mgos_pcf8574 *dev, int pin, mgo
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return;
   }
-  LOG(LL_ERROR, ("Not implemented yet"));
+  dev->cb[pin].fn     = NULL;
+  dev->cb[pin].fn_arg = NULL;
   return;
-  (void) old_cb;
-  (void) old_arg;
+
+  (void)old_cb;
+  (void)old_arg;
 }
 
 bool mgos_pcf8574_gpio_set_button_handler(struct mgos_pcf8574 *dev, int pin, enum mgos_gpio_pull_type pull_type, enum mgos_gpio_int_mode int_mode, int debounce_ms, mgos_gpio_int_handler_f cb, void *arg) {
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
-  LOG(LL_ERROR, ("Not implemented yet"));
-  return false;
-  (void) pull_type;
-  (void) int_mode;
-  (void) debounce_ms;
-  (void) cb;
-  (void) arg;
+  dev->cb[pin].fn          = cb;
+  dev->cb[pin].fn_arg      = arg;
+  dev->cb[pin].debounce_ms = debounce_ms;
+  dev->cb[pin].mode        = int_mode;
+  return true;
+
+  (void)pull_type;
 }
 
 // Mongoose OS library initialization
