@@ -213,8 +213,7 @@ bool mgos_pcf8574_gpio_set_mode(struct mgos_pcf8574 *dev, int pin, enum mgos_gpi
     return true;
   }
 
-  dev->_io    &= ~(1 << pin);
-  dev->_state |= (1 << pin);
+  dev->_io &= ~(1 << pin);
   mgos_pcf8574_write(dev);
 
   return true;
