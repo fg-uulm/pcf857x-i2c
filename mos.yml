@@ -1,6 +1,6 @@
 author: Pim van Pelt <pim@google.com>
 type: lib
-description: Mongoose OS library for PCF8574
+description: Mongoose OS library for PCF857X
 version: 1.0
 platforms: [esp8266, esp32]
 
@@ -11,9 +11,9 @@ includes:
   - include
 
 config_schema:
-  - ["pcf8574", "o", {title: "pcf8574 settings"}]
-  - ["pcf8574.i2caddr", "i", 0x40, {title: "I2C Address"}]
-  - ["pcf8574.int_gpio", "i", -1, {title: "Interrupt pin"}]
+  - ["pcf857x", "o", {title: "pcf857x settings"}]
+  - ["pcf857x.i2caddr", "i", 0x40, {title: "I2C Address"}]
+  - ["pcf857x.int_gpio", "i", -1, {title: "Interrupt pin"}]
 
 libs:
   - origin: https://github.com/mongoose-os-libs/i2c
@@ -22,6 +22,6 @@ tags:
   - c
   - i2c
   - hw
-  - docs:drivers:PCF8574 I2C
+  - docs:drivers:PCF857X I2C
 
 manifest_version: 2017-09-29

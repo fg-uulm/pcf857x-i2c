@@ -15,20 +15,16 @@
  */
 
 #pragma once
-#include "mgos_pcf8574.h"
+#include "mgos_pcf857x.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// PCF8574 I2C address
-#define MGOS_PCF8574_I2C_ADDR      (0x20)
-#define MGOS_PCF8574_PINS          (8)
+// PCF857X I2C address
+#define MGOS_PCF857X_I2C_ADDR    (0x20)
 
-// Registers
-#define MGOS_PCF8574_REG_CONFIG    (0x00)
-
-struct mgos_pcf8574_cb {
+struct mgos_pcf857x_cb {
   mgos_gpio_int_handler_f fn;
   void *                  fn_arg;
   double                  last;
@@ -38,18 +34,20 @@ struct mgos_pcf8574_cb {
   enum mgos_gpio_int_mode mode;
 };
 
-struct mgos_pcf8574 {
+struct mgos_pcf857x {
   struct mgos_i2c *      i2c;
   uint8_t                i2caddr;
 
-  uint8_t                _state;                     // Last read from device
-  uint8_t                _io;                        // each bit signals pin in INPUT (1) or OUTPUT (0)
+  uint16_t               _state;                     // Last read from device
+  uint16_t               _io;                        // each bit signals pin in INPUT (1) or OUTPUT (0)
+  uint8_t                num_gpios;                  // PCF8574: 8; PCF8575: 16
   int                    int_gpio;                   // Interrupt pin from device
-  struct mgos_pcf8574_cb cb[MGOS_PCF8574_PINS];
+
+  struct mgos_pcf857x_cb cb[16];
 };
 
 /* Mongoose OS initializer */
-bool mgos_pcf8574_i2c_init(void);
+bool mgos_pcf857x_i2c_init(void);
 
 #ifdef __cplusplus
 }
