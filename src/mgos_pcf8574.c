@@ -189,24 +189,33 @@ bool mgos_pcf8574_gpio_set_mode(struct mgos_pcf8574 *dev, int pin, enum mgos_gpi
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
+
   if (mode == MGOS_GPIO_MODE_INPUT) {
+    /* When setting INPUT mode on a pin and the pin is reading low, an interrupt will fire as
+     * it transitions from the written 1 (which is mandatory on INPUT pins) to 0. We disable
+     * interrupts for two cycles (4us each) to allow for this interrupt to fire without calling
+     * the user callback.
+     */
     dev->_io    |= (1 << pin);
     dev->_state |= (1 << pin);
-  } else {
-    dev->_io    &= ~(1 << pin);
-    dev->_state |= (1 << pin);
+    mgos_pcf8574_gpio_disable_int(dev, pin);
+    mgos_pcf8574_write(dev);
+    mgos_usleep(10);
+    mgos_pcf8574_read(dev);
+    mgos_pcf8574_gpio_enable_int(dev, pin);
+    return true;
   }
+
+  dev->_io    &= ~(1 << pin);
+  dev->_state |= (1 << pin);
   mgos_pcf8574_write(dev);
 
   return true;
 }
 
 bool mgos_pcf8574_gpio_setup_input(struct mgos_pcf8574 *dev, int pin, enum mgos_gpio_pull_type pull_type) {
-  if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
-    return false;
-  }
-  dev->_io |= (1 << pin);
-  mgos_pcf8574_gpio_write(dev, pin, 1);
+  return mgos_pcf8574_gpio_set_mode(dev, pin, MGOS_GPIO_MODE_INPUT);
+
   return true;
 
   (void)pull_type;
