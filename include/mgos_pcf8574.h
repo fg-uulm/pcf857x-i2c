@@ -45,7 +45,7 @@ bool mgos_pcf8574_destroy(struct mgos_pcf8574 **dev);
 
 /* Emit a logline with the pin and io register stat
  */
-bool mgos_pcf8574_print_state(struct mgos_pcf8574 *dev);
+void mgos_pcf8574_print_state(struct mgos_pcf8574 *dev);
 
 /* These follow `mgos_gpio.h` definitions. */
 bool mgos_pcf8574_gpio_set_mode(struct mgos_pcf8574 *dev, int pin, enum mgos_gpio_mode mode);
