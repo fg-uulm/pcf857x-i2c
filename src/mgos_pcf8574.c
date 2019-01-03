@@ -16,16 +16,6 @@
 
 #include "mgos_pcf8574_internal.h"
 
-// Poor person's detect -- power on state reads back 0xff
-static bool mgos_pcf8574_detect(struct mgos_i2c *i2c, uint8_t i2caddr) {
-  uint8_t val;
-
-  if (!mgos_i2c_read(i2c, i2caddr, &val, 1, true)) {
-    return false;
-  }
-  return val == 0xff;
-}
-
 static void mgos_pcf8574_print(struct mgos_pcf8574 *dev) {
   uint8_t n;
   char    s[9], i[9];
@@ -154,11 +144,6 @@ struct mgos_pcf8574 *mgos_pcf8574_create(struct mgos_i2c *i2c, uint8_t i2caddr, 
   struct mgos_pcf8574 *dev = NULL;
 
   if (!i2c) {
-    return NULL;
-  }
-
-  if (!mgos_pcf8574_detect(i2c, i2caddr)) {
-    LOG(LL_ERROR, ("I2C 0x%02x is not a PCF8574", i2caddr));
     return NULL;
   }
 
