@@ -43,6 +43,10 @@ struct mgos_pcf8574 *mgos_pcf8574_create(struct mgos_i2c *i2c, uint8_t i2caddr, 
  */
 bool mgos_pcf8574_destroy(struct mgos_pcf8574 **dev);
 
+/* Emit a logline with the pin and io register stat
+ */
+bool mgos_pcf8574_print_state(struct mgos_pcf8574 *dev);
+
 /* These follow `mgos_gpio.h` definitions. */
 bool mgos_pcf8574_gpio_set_mode(struct mgos_pcf8574 *dev, int pin, enum mgos_gpio_mode mode);
 bool mgos_pcf8574_gpio_setup_output(struct mgos_pcf8574 *dev, int pin, bool level);

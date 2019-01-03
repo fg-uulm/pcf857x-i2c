@@ -16,7 +16,7 @@
 
 #include "mgos_pcf8574_internal.h"
 
-static void mgos_pcf8574_print(struct mgos_pcf8574 *dev) {
+void mgos_pcf8574_print_state(struct mgos_pcf8574 *dev) {
   uint8_t n;
   char    s[9], i[9];
 
@@ -28,7 +28,7 @@ static void mgos_pcf8574_print(struct mgos_pcf8574 *dev) {
     i[7 - n] = (dev->_io & (1 << n)) ? 'I' : 'O';
   }
   s[8] = i[8] = 0;
-  LOG(LL_DEBUG, ("state=0x%02x %s; io=0x%02x %s", dev->_state, s, dev->_io, i));
+  LOG(LL_INFO, ("state=0x%02x %s; io=0x%02x %s", dev->_state, s, dev->_io, i));
 }
 
 static bool mgos_pcf8574_read(struct mgos_pcf8574 *dev) {
@@ -41,7 +41,7 @@ static bool mgos_pcf8574_read(struct mgos_pcf8574 *dev) {
     return false;
   }
   dev->_state = val;
-  mgos_pcf8574_print(dev);
+//  mgos_pcf8574_print_state(dev);
   return true;
 }
 
@@ -63,6 +63,7 @@ static bool mgos_pcf8574_write(struct mgos_pcf8574 *dev) {
 
 static void mgos_pcf8574_irq(int pin, void *arg) {
   struct mgos_pcf8574 *dev = (struct mgos_pcf8574 *)arg;
+  uint8_t n;
   uint8_t prev_state, this_state;
 
   if (!dev) {
@@ -71,72 +72,63 @@ static void mgos_pcf8574_irq(int pin, void *arg) {
   if (dev->int_gpio != pin) {
     return;
   }
-  LOG(LL_INFO, ("Interrupt!"));
-  mgos_pcf8574_print(dev);
+//  mgos_pcf8574_print_state(dev);
   prev_state = dev->_state & dev->_io;
   mgos_pcf8574_read(dev);
   this_state = dev->_state & dev->_io;
 
-  if (prev_state != this_state) {
-    uint8_t n;
-    char    prev[9], this[9];
-    for (n = 0; n < 8; n++) {
-      prev[n] = (prev_state & (1 << n)) ? '1' : '0';
-      this[n] = (this_state & (1 << n)) ? '1' : '0';
-    }
-    prev[8] = this[8] = 0;
-    LOG(LL_INFO, ("prev=%s this=%s", prev, this));
-
-    for (n = 0; n < 8; n++) {
-      bool prev_bit  = prev_state & (1 << n);
-      bool this_bit  = this_state & (1 << n);
-      bool will_call = false;
-      switch (dev->cb[n].mode) {
-      case MGOS_GPIO_INT_EDGE_POS:
-        if (!prev_bit && this_bit) {
-          will_call = true;
-        }
-        break;
-
-      case MGOS_GPIO_INT_EDGE_NEG:
-        if (prev_bit && !this_bit) {
-          will_call = true;
-        }
-        break;
-
-      case MGOS_GPIO_INT_EDGE_ANY:
-        if (prev_bit != this_bit) {
-          will_call = true;
-        }
-        break;
-
-      case MGOS_GPIO_INT_LEVEL_HI:
-        if (this_bit) {
-          will_call = true;
-        }
-        break;
-
-      case MGOS_GPIO_INT_LEVEL_LO:
-        if (!this_bit) {
-          will_call = true;
-        }
-        break;
-
-      default:
-        return;
-      }
-      LOG(LL_INFO, ("GPIO[%u] prev_bit=%u this_bit=%u will_call=%u", n, prev_bit, this_bit, will_call));
-      if (will_call && dev->cb[n].enabled) {
-        dev->cb[n].firing = true;
-        dev->cb[n].last   = mg_time();
-        if (dev->cb[n].fn) {
-          LOG(LL_INFO, ("GPIO[%u] callback issued", n));
-          dev->cb[n].fn(n, dev->cb[n].fn_arg);
-        }
-        dev->cb[n].firing = false;
-      }
-    }
+  if (prev_state == this_state) {
     return;
+  }
+
+  for (n = 0; n < 8; n++) {
+    bool prev_bit  = prev_state & (1 << n);
+    bool this_bit  = this_state & (1 << n);
+    bool will_call = false;
+    switch (dev->cb[n].mode) {
+    case MGOS_GPIO_INT_EDGE_POS:
+      if (!prev_bit && this_bit) {
+        will_call = true;
+      }
+      break;
+
+    case MGOS_GPIO_INT_EDGE_NEG:
+      if (prev_bit && !this_bit) {
+        will_call = true;
+      }
+      break;
+
+    case MGOS_GPIO_INT_EDGE_ANY:
+      if (prev_bit != this_bit) {
+        will_call = true;
+      }
+      break;
+
+    case MGOS_GPIO_INT_LEVEL_HI:
+      if (this_bit) {
+        will_call = true;
+      }
+      break;
+
+    case MGOS_GPIO_INT_LEVEL_LO:
+      if (!this_bit) {
+        will_call = true;
+      }
+      break;
+
+    default:
+      will_call = false;
+    }
+    // LOG(LL_DEBUG, ("GPIO[%u] prev_bit=%u this_bit=%u will_call=%u", n, prev_bit, this_bit, will_call));
+    if (will_call && dev->cb[n].enabled) {
+      dev->cb[n].firing = true;
+      dev->cb[n].last   = mg_time();
+      if (dev->cb[n].fn) {
+        // LOG(LL_DEBUG, ("GPIO[%u] callback issued", n));
+        dev->cb[n].fn(n, dev->cb[n].fn_arg);
+      }
+      dev->cb[n].firing = false;
+    }
   }
   return;
 }
@@ -161,13 +153,18 @@ struct mgos_pcf8574 *mgos_pcf8574_create(struct mgos_i2c *i2c, uint8_t i2caddr, 
   dev->_io = 0x00;      // Set all pins to OUTPUT
   // Read current IO state, assuming all pins are OUTPUT
   if (!mgos_pcf8574_read(dev)) {
+    LOG(LL_ERROR, ("Could not read state from PCF8574"));
     free(dev);
     return NULL;
   }
 
   // Install interrupt handler, if GPIO pin was specified.
   if (dev->int_gpio != -1) {
+    LOG(LL_INFO, ("Installing interrupt handler on GPIO %d", dev->int_gpio));
+    mgos_gpio_set_mode(dev->int_gpio, MGOS_GPIO_MODE_INPUT);
+    mgos_gpio_set_pull(dev->int_gpio, MGOS_GPIO_PULL_UP);
     mgos_gpio_set_int_handler(dev->int_gpio, MGOS_GPIO_INT_EDGE_NEG, mgos_pcf8574_irq, dev);
+    mgos_gpio_clear_int(dev->int_gpio);
     mgos_gpio_enable_int(dev->int_gpio);
   }
   LOG(LL_INFO, ("PCF8574 initialized %sat I2C 0x%02x", (dev->int_gpio != -1) ? "with interrupts " : "", dev->i2caddr));
@@ -255,9 +252,10 @@ bool mgos_pcf8574_gpio_set_int_handler(struct mgos_pcf8574 *dev, int pin, enum m
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
-  dev->cb[pin].fn     = cb;
-  dev->cb[pin].fn_arg = arg;
-  dev->cb[pin].mode   = mode;
+  dev->cb[pin].fn      = cb;
+  dev->cb[pin].fn_arg  = arg;
+  dev->cb[pin].mode    = mode;
+  dev->cb[pin].enabled = true;
   return true;
 
   (void)mode;
@@ -292,8 +290,10 @@ void mgos_pcf8574_gpio_remove_int_handler(struct mgos_pcf8574 *dev, int pin, mgo
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return;
   }
-  dev->cb[pin].fn     = NULL;
-  dev->cb[pin].fn_arg = NULL;
+  dev->cb[pin].fn      = NULL;
+  dev->cb[pin].fn_arg  = NULL;
+  dev->cb[pin].firing  = false;
+  dev->cb[pin].enabled = false;
   return;
 
   (void)old_cb;
@@ -304,11 +304,8 @@ bool mgos_pcf8574_gpio_set_button_handler(struct mgos_pcf8574 *dev, int pin, enu
   if (!dev || pin < 0 || pin >= MGOS_PCF8574_PINS) {
     return false;
   }
-  dev->cb[pin].fn          = cb;
-  dev->cb[pin].fn_arg      = arg;
   dev->cb[pin].debounce_ms = debounce_ms;
-  dev->cb[pin].mode        = int_mode;
-  return true;
+  return mgos_pcf8574_gpio_set_int_handler(dev, pin, int_mode, cb, arg);
 
   (void)pull_type;
 }
