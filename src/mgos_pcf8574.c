@@ -24,8 +24,8 @@ static void mgos_pcf8574_print(struct mgos_pcf8574 *dev) {
     return;
   }
   for (n = 0; n < 8; n++) {
-    s[n] = (dev->_state & (1 << n)) ? '1' : '0';
-    i[n] = (dev->_io & (1 << n)) ? 'I' : 'O';
+    s[7 - n] = (dev->_state & (1 << n)) ? '1' : '0';
+    i[7 - n] = (dev->_io & (1 << n)) ? 'I' : 'O';
   }
   s[8] = i[8] = 0;
   LOG(LL_DEBUG, ("state=0x%02x %s; io=0x%02x %s", dev->_state, s, dev->_io, i));
