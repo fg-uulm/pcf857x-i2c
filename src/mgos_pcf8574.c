@@ -51,12 +51,13 @@ static bool mgos_pcf8574_write(struct mgos_pcf8574 *dev) {
   if (!dev) {
     return false;
   }
+
+  // On PCF8574, all INPUT bits are written as '1' and will return
+  // to their GPIO level upon read.
   val = dev->_state | dev->_io;
   if (!mgos_i2c_write(dev->i2c, dev->i2caddr, &val, 1, true)) {
     return false;
   }
-
-  mgos_pcf8574_print(dev);
   return true;
 }
 
