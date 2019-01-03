@@ -46,6 +46,7 @@ bool mgos_pcf8574_destroy(struct mgos_pcf8574 **dev);
 /* These follow `mgos_gpio.h` definitions. */
 bool mgos_pcf8574_gpio_set_mode(struct mgos_pcf8574 *dev, int pin, enum mgos_gpio_mode mode);
 bool mgos_pcf8574_gpio_setup_output(struct mgos_pcf8574 *dev, int pin, bool level);
+bool mgos_pcf8574_gpio_setup_input(struct mgos_pcf8574 *dev, int pin, enum mgos_gpio_pull_type pull_type);
 bool mgos_pcf8574_gpio_read(struct mgos_pcf8574 *dev, int pin);
 void mgos_pcf8574_gpio_write(struct mgos_pcf8574 *dev, int pin, bool level);
 bool mgos_pcf8574_gpio_toggle(struct mgos_pcf8574 *dev, int pin);
