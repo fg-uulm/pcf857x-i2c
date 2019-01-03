@@ -72,7 +72,7 @@ static void mgos_pcf8574_irq(int pin, void *arg) {
   if (dev->int_gpio != pin) {
     return;
   }
-//  mgos_pcf8574_print_state(dev);
+  // mgos_pcf8574_print_state(dev);
   prev_state = dev->_state & dev->_io;
   mgos_pcf8574_read(dev);
   this_state = dev->_state & dev->_io;
@@ -130,6 +130,10 @@ static void mgos_pcf8574_irq(int pin, void *arg) {
       dev->cb[n].firing = false;
     }
   }
+
+  // Clear the interrupt by reading the state again after T(ir) transpires.
+  mgos_usleep(5);
+  mgos_pcf8574_read(dev);
   return;
 }
 
