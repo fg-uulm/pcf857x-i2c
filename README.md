@@ -48,8 +48,8 @@ enum mgos_app_init_result mgos_app_init(void) {
     return MGOS_APP_INIT_ERROR;
   }
 
-  for(i=0; i<4; i++) mgos_pcf8574_gpio_setup_input(d, i, 0);
-  for(i=4; i<8; i++) mgos_pcf8574_gpio_setup_output(d, i, 1);
+  for(i=0; i<4; i++) mgos_pcf8574_gpio_setup_input(d, i, MGOS_GPIO_PULL_UP);
+  for(i=4; i<8; i++) mgos_pcf8574_gpio_set_mode(d, i, MGOS_GPIO_MODE_OUTPUT);
 
   mgos_pcf8574_gpio_set_button_handler(d, 0, MGOS_GPIO_PULL_UP, MGOS_GPIO_INT_EDGE_NEG, 10, button_cb, d);
   mgos_pcf8574_gpio_set_button_handler(d, 1, MGOS_GPIO_PULL_UP, MGOS_GPIO_INT_EDGE_POS, 10, button_cb, d);
