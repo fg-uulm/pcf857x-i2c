@@ -193,6 +193,16 @@ bool mgos_pcf857x_destroy(struct mgos_pcf857x **dev) {
     return false;
   }
 
+  // Disable and remove interrupts
+  if ((*dev)->int_gpio != -1) {
+    LOG(LL_INFO, ("Removing interrupt handler on GPIO %d", (*dev)->int_gpio));
+
+    // Remove interrupt handler on MCU
+    mgos_gpio_disable_int((*dev)->int_gpio);
+    mgos_gpio_clear_int((*dev)->int_gpio);
+    mgos_gpio_remove_int_handler((*dev)->int_gpio, NULL, NULL);
+  }
+
   free(*dev);
   *dev = NULL;
   return true;
