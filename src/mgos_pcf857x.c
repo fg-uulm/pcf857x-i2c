@@ -24,8 +24,8 @@ void mgos_pcf857x_print_state(struct mgos_pcf857x *dev) {
     return;
   }
   for (n = 0; n < dev->num_gpios; n++) {
-    s[dev->num_gpios - n + 1] = (dev->_state & (1 << n)) ? '1' : '0';
-    i[dev->num_gpios - n + 1] = (dev->_io & (1 << n)) ? 'I' : 'O';
+    s[dev->num_gpios - n - 1] = (dev->_state & (1 << n)) ? '1' : '0';
+    i[dev->num_gpios - n - 1] = (dev->_io & (1 << n)) ? 'I' : 'O';
   }
   s[dev->num_gpios] = i[dev->num_gpios] = 0;
   if (dev->num_gpios == 8) {
