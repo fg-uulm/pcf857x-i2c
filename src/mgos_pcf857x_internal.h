@@ -46,6 +46,16 @@ struct mgos_pcf857x {
   struct mgos_pcf857x_cb cb[16];
 };
 
+struct mgos_pcf857x_gpio_blink_state {
+  int pin;
+  struct mgos_pcf857x *dev;
+  struct {
+    unsigned int on_ms;
+    unsigned int off_ms;
+    mgos_timer_id timer_id;
+  } blink;
+};
+
 /* Mongoose OS initializer */
 bool mgos_pcf857x_i2c_init(void);
 
