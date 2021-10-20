@@ -20,7 +20,7 @@
 
 static struct mgos_pcf857x_gpio_blink_state **blink_states = NULL;
 
-struct mgos_pcf857x_gpio_blink_state *mgos_pcf857x_get_or_create_blink_state(struct mgos_pcf857x *dev, int pin) {
+static struct mgos_pcf857x_gpio_blink_state *mgos_pcf857x_get_or_create_blink_state(struct mgos_pcf857x *dev, int pin) {
   if (blink_states == NULL) {
     blink_states = calloc(dev->num_gpios, sizeof(struct mgos_pcf857x_gpio_blink_state *));
     LD("Init %d pin", dev->num_gpios);
