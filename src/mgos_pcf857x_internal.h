@@ -56,6 +56,9 @@ struct mgos_pcf857x_gpio_blink_state {
   } blink;
 };
 
+/* Callback used by the blink function */
+static void mgos_pcf857x_gpio_blink_cb(void *arg);
+
 /* Mongoose OS initializer */
 bool mgos_pcf857x_i2c_init(void);
 
