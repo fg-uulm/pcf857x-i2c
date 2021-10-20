@@ -414,7 +414,7 @@ bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int o
             mgos_pcf857x_gpio_blink_cb, bs);
         res = (bs->timer_id != MGOS_INVALID_TIMER_ID);
         LD("Set timer for PIN-%d (on=%dms, off=%dms)", bs->pin, bs->on_ms, bs->off_ms);
-      } else if(on_ms == 0 && off_ms == 0) {
+      } else {
         mgos_pcf857x_clear_blink_state(bs->pin);
       }
     }

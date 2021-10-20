@@ -65,7 +65,7 @@ bool mgos_pcf857x_gpio_set_button_handler(struct mgos_pcf857x *dev, int pin, enu
 
 /*
  * A utility function that takes care of blinking an LED.
- * Set to (0, 0) to disable.
+ * Set either on_ms or off_ms to 0 to disable
  */
 bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int off_ms);
 
