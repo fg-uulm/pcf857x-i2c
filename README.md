@@ -58,6 +58,8 @@ enum mgos_app_init_result mgos_app_init(void) {
   mgos_pcf857x_gpio_set_button_handler(d, 2, MGOS_GPIO_PULL_UP, MGOS_GPIO_INT_EDGE_ANY, 10, button_cb, d);
   mgos_pcf857x_gpio_set_button_handler(d, 3, MGOS_GPIO_PULL_UP, MGOS_GPIO_INT_EDGE_ANY, 10, button_cb, d);
 
+  mgos_pcf857x_gpio_blink(d, 4, 1000, 1000);
+
   return MGOS_APP_INIT_SUCCESS;
 }
 ```

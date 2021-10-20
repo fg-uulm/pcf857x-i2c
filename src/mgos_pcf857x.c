@@ -13,8 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <stdio.h>
 #include "mgos_pcf857x_internal.h"
+
+#define LD(fmt, ...) LOG(LL_DEBUG, ("[BLINK STATE] " fmt, ##__VA_ARGS__))
+
+static struct mgos_pcf857x_gpio_blink_state **blink_states = NULL;
+
+static struct mgos_pcf857x_gpio_blink_state *mgos_pcf857x_get_or_create_blink_state(struct mgos_pcf857x *dev, int pin) {
+  if (blink_states == NULL) {
+    blink_states = calloc(dev->num_gpios, sizeof(struct mgos_pcf857x_gpio_blink_state *));
+    LD("Init %d pin", dev->num_gpios);
+  }
+
+  if (blink_states[pin] == NULL) {
+    blink_states[pin] = calloc(1, sizeof(struct mgos_pcf857x_gpio_blink_state));
+    blink_states[pin]->dev = dev;
+    blink_states[pin]->pin = pin;
+    blink_states[pin]->timer_id = MGOS_INVALID_TIMER_ID;
+    
+    mgos_pcf857x_gpio_setup_output(dev, pin, false);
+  }
+
+  return blink_states[pin];
+}
+
+static void mgos_pcf857x_clear_blink_state(int pin) {
+  if(blink_states[pin] != NULL) {
+    free(blink_states[pin]);
+    blink_states[pin] = NULL;
+  }
+}
 
 void mgos_pcf857x_print_state(struct mgos_pcf857x *dev) {
   uint8_t n;
@@ -350,6 +379,47 @@ bool mgos_pcf857x_gpio_set_button_handler(struct mgos_pcf857x *dev, int pin, enu
   return mgos_pcf857x_gpio_set_int_handler(dev, pin, int_mode, cb, arg);
 
   (void)pull_type;
+}
+
+static void mgos_pcf857x_gpio_blink_cb(void *arg) {
+  struct mgos_pcf857x_gpio_blink_state *bs = (struct mgos_pcf857x_gpio_blink_state *)arg;
+
+  if (bs != NULL) {
+    bool curr = mgos_pcf857x_gpio_toggle(bs->dev, bs->pin);
+    if (bs->on_ms != bs->off_ms) {
+      int timeout = (curr ? bs->on_ms : bs->off_ms);
+      bs->timer_id = mgos_set_timer(timeout, 0, mgos_pcf857x_gpio_blink_cb, bs);
+    }
+  }
+}
+
+bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int off_ms) {
+  bool res = !(!dev || on_ms < 0 || off_ms < 0 || on_ms >= 65536 || off_ms >= 65536);
+  if (res) {
+    struct mgos_pcf857x_gpio_blink_state *bs = mgos_pcf857x_get_or_create_blink_state(dev, pin);
+    if (bs != NULL) {
+
+      bs->on_ms = on_ms;
+      bs->off_ms = off_ms;
+
+      if (bs->timer_id != MGOS_INVALID_TIMER_ID) {
+        mgos_clear_timer(bs->timer_id);
+        bs->timer_id = MGOS_INVALID_TIMER_ID;
+        LD("Clear timer for PIN-%d", bs->pin);
+      }
+      if (on_ms != 0 && off_ms != 0) {
+        bs->timer_id = mgos_set_timer(
+            on_ms,
+            (on_ms == off_ms ? MGOS_TIMER_REPEAT : 0) | MGOS_TIMER_RUN_NOW,
+            mgos_pcf857x_gpio_blink_cb, bs);
+        res = (bs->timer_id != MGOS_INVALID_TIMER_ID);
+        LD("Set timer for PIN-%d (on=%dms, off=%dms)", bs->pin, bs->on_ms, bs->off_ms);
+      } else {
+        mgos_pcf857x_clear_blink_state(bs->pin);
+      }
+    }
+  }
+  return res;
 }
 
 // Mongoose OS library initialization

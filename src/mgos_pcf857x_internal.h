@@ -16,6 +16,7 @@
 
 #pragma once
 #include "mgos_pcf857x.h"
+#include "mgos_timers.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +46,17 @@ struct mgos_pcf857x {
 
   struct mgos_pcf857x_cb cb[16];
 };
+
+struct mgos_pcf857x_gpio_blink_state {
+  int pin;
+  struct mgos_pcf857x *dev;
+  unsigned int on_ms;
+  unsigned int off_ms;
+  mgos_timer_id timer_id;
+};
+
+/* Callback used by the blink function */
+static void mgos_pcf857x_gpio_blink_cb(void *arg);
 
 /* Mongoose OS initializer */
 bool mgos_pcf857x_i2c_init(void);

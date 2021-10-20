@@ -63,6 +63,12 @@ void mgos_pcf857x_gpio_clear_int(struct mgos_pcf857x *dev, int pin);
 void mgos_pcf857x_gpio_remove_int_handler(struct mgos_pcf857x *dev, int pin, mgos_gpio_int_handler_f *old_cb, void **old_arg);
 bool mgos_pcf857x_gpio_set_button_handler(struct mgos_pcf857x *dev, int pin, enum mgos_gpio_pull_type pull_type, enum mgos_gpio_int_mode int_mode, int debounce_ms, mgos_gpio_int_handler_f cb, void *arg);
 
+/*
+ * A utility function that takes care of blinking an LED.
+ * Set either on_ms or off_ms to 0 to disable
+ */
+bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int off_ms);
+
 #ifdef __cplusplus
 }
 #endif
