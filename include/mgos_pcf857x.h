@@ -26,8 +26,6 @@ extern "C" {
 
 struct mgos_pcf857x;
 
-struct mgos_pcf857x_gpio_blink_state;
-
 /*
  * Initialize a PCF857X on the I2C bus `i2c` at address specified in `i2caddr`
  * parameter (default PCF857X is on address 0x20). The device will be polled for
@@ -68,11 +66,9 @@ bool mgos_pcf857x_gpio_set_button_handler(struct mgos_pcf857x *dev, int pin, enu
 
 /*
  * A utility function that takes care of blinking an LED.
- * The pin must be configured as output first.
  * Set to (0, 0) to disable.
  */
 bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int off_ms);
-void mgos_pcf857x_gpio_blink_cb(void *arg);
 
 #ifdef __cplusplus
 }

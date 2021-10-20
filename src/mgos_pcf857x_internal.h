@@ -49,12 +49,13 @@ struct mgos_pcf857x {
 struct mgos_pcf857x_gpio_blink_state {
   int pin;
   struct mgos_pcf857x *dev;
-  struct {
-    unsigned int on_ms;
-    unsigned int off_ms;
-    mgos_timer_id timer_id;
-  } blink;
+  unsigned int on_ms;
+  unsigned int off_ms;
+  mgos_timer_id timer_id;
 };
+
+/* Callback used by the blink function */
+static void mgos_pcf857x_gpio_blink_cb(void *arg);
 
 /* Mongoose OS initializer */
 bool mgos_pcf857x_i2c_init(void);
