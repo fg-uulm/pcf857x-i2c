@@ -30,7 +30,7 @@ static struct mgos_pcf857x_gpio_blink_state *mgos_pcf857x_get_or_create_blink_st
     blink_states[pin] = calloc(1, sizeof(struct mgos_pcf857x_gpio_blink_state));
     blink_states[pin]->dev = dev;
     blink_states[pin]->pin = pin;
-    blink_states[pin]->blink.timer_id = MGOS_INVALID_TIMER_ID;
+    blink_states[pin]->timer_id = MGOS_INVALID_TIMER_ID;
   }
 
   return blink_states[pin];
@@ -377,9 +377,9 @@ void mgos_pcf857x_gpio_blink_cb(void *arg) {
 
   if (bs != NULL) {
     bool curr = mgos_pcf857x_gpio_toggle(bs->dev, bs->pin);
-    if (bs->blink.on_ms != bs->blink.off_ms) {
-      int timeout = (curr ? bs->blink.on_ms : bs->blink.off_ms);
-      bs->blink.timer_id = mgos_set_timer(timeout, 0, mgos_pcf857x_gpio_blink_cb, bs);
+    if (bs->on_ms != bs->off_ms) {
+      int timeout = (curr ? bs->on_ms : bs->off_ms);
+      bs->timer_id = mgos_set_timer(timeout, 0, mgos_pcf857x_gpio_blink_cb, bs);
     }
   }
 }
@@ -390,21 +390,21 @@ bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int o
     struct mgos_pcf857x_gpio_blink_state *bs = mgos_pcf857x_get_or_create_blink_state(dev, pin);
     if (bs != NULL) {
 
-      bs->blink.on_ms = on_ms;
-      bs->blink.off_ms = off_ms;
+      bs->on_ms = on_ms;
+      bs->off_ms = off_ms;
 
-      if (bs->blink.timer_id != MGOS_INVALID_TIMER_ID) {
-        mgos_clear_timer(bs->blink.timer_id);
-        bs->blink.timer_id = MGOS_INVALID_TIMER_ID;
+      if (bs->timer_id != MGOS_INVALID_TIMER_ID) {
+        mgos_clear_timer(bs->timer_id);
+        bs->timer_id = MGOS_INVALID_TIMER_ID;
         LD("Clear timer for PIN-%d", bs->pin);
       }
       if (on_ms != 0 && off_ms != 0) {
-        bs->blink.timer_id = mgos_set_timer(
+        bs->timer_id = mgos_set_timer(
             on_ms,
             (on_ms == off_ms ? MGOS_TIMER_REPEAT : 0) | MGOS_TIMER_RUN_NOW,
             mgos_pcf857x_gpio_blink_cb, bs);
-        res = (bs->blink.timer_id != MGOS_INVALID_TIMER_ID);
-        LD("Set timer for PIN-%d (on=%dms, off=%dms)", bs->pin, bs->blink.on_ms, bs->blink.off_ms);
+        res = (bs->timer_id != MGOS_INVALID_TIMER_ID);
+        LD("Set timer for PIN-%d (on=%dms, off=%dms)", bs->pin, bs->on_ms, bs->off_ms);
       }
     }
   }
