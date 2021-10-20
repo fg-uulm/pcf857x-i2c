@@ -36,6 +36,13 @@ static struct mgos_pcf857x_gpio_blink_state *mgos_pcf857x_get_or_create_blink_st
   return blink_states[pin];
 }
 
+static void mgos_pcf857x_clear_blink_state(int pin) {
+  if(blink_states[pin] != NULL) {
+    free(blink_states[pin]);
+    blink_states[pin] = NULL;
+  }
+}
+
 void mgos_pcf857x_print_state(struct mgos_pcf857x *dev) {
   uint8_t n;
   char    s[17], i[17];
@@ -405,6 +412,8 @@ bool mgos_pcf857x_gpio_blink(struct mgos_pcf857x *dev, int pin, int on_ms, int o
             mgos_pcf857x_gpio_blink_cb, bs);
         res = (bs->timer_id != MGOS_INVALID_TIMER_ID);
         LD("Set timer for PIN-%d (on=%dms, off=%dms)", bs->pin, bs->on_ms, bs->off_ms);
+      } else if(on_ms == 0 && off_ms == 0) {
+        mgos_pcf857x_clear_blink_state(bs->pin);
       }
     }
   }
