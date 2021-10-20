@@ -31,6 +31,8 @@ static struct mgos_pcf857x_gpio_blink_state *mgos_pcf857x_get_or_create_blink_st
     blink_states[pin]->dev = dev;
     blink_states[pin]->pin = pin;
     blink_states[pin]->timer_id = MGOS_INVALID_TIMER_ID;
+    
+    mgos_pcf857x_gpio_setup_output(dev, pin, false);
   }
 
   return blink_states[pin];
