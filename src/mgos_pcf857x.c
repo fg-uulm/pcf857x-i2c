@@ -381,7 +381,7 @@ bool mgos_pcf857x_gpio_set_button_handler(struct mgos_pcf857x *dev, int pin, enu
   (void)pull_type;
 }
 
-void mgos_pcf857x_gpio_blink_cb(void *arg) {
+static void mgos_pcf857x_gpio_blink_cb(void *arg) {
   struct mgos_pcf857x_gpio_blink_state *bs = (struct mgos_pcf857x_gpio_blink_state *)arg;
 
   if (bs != NULL) {
