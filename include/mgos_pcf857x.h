@@ -18,7 +18,6 @@
 #include "mgos.h"
 #include "mgos_gpio.h"
 #include "mgos_i2c.h"
-#include "mgos_timers.h"
 
 #ifdef __cplusplus
 extern "C" {

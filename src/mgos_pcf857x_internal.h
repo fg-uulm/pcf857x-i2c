@@ -16,6 +16,7 @@
 
 #pragma once
 #include "mgos_pcf857x.h"
+#include "mgos_timers.h"
 
 #ifdef __cplusplus
 extern "C" {
