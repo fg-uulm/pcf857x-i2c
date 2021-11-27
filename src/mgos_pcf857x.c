@@ -217,6 +217,14 @@ struct mgos_pcf857x *mgos_pcf8575_create(struct mgos_i2c *i2c, uint8_t i2caddr, 
   return mgos_pcf857x_create(i2c, i2caddr, int_gpio, 16);
 }
 
+struct mgos_pcf857x *mgos_pcf8574_create_js(uint8_t i2caddr, int int_gpio) {
+  return mgos_pcf857x_create(mgos_i2c_get_global(), i2caddr, int_gpio, 8);
+}
+
+struct mgos_pcf857x *mgos_pcf8575_create_js(uint8_t i2caddr, int int_gpio) {
+  return mgos_pcf857x_create(mgos_i2c_get_global(), i2caddr, int_gpio, 16);
+}
+
 bool mgos_pcf857x_destroy(struct mgos_pcf857x **dev) {
   if (!*dev) {
     return false;
@@ -379,6 +387,10 @@ bool mgos_pcf857x_gpio_set_button_handler(struct mgos_pcf857x *dev, int pin, enu
   return mgos_pcf857x_gpio_set_int_handler(dev, pin, int_mode, cb, arg);
 
   (void)pull_type;
+}
+
+void mgos_pcf857x_gpio_set_debounce_js(struct mgos_pcf857x *dev, int pin, int debounce_ms) {
+  dev->cb[pin].debounce_ms = debounce_ms;
 }
 
 static void mgos_pcf857x_gpio_blink_cb(void *arg) {
