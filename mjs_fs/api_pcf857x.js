@@ -51,7 +51,7 @@ let PCF857X = {
         },
 
         setup_input: function(pin, pull_type) {
-            return PCF857X._setup_output(this.pcf, pin, pull_type);
+            return PCF857X._setup_input(this.pcf, pin, pull_type);
         },
 
         read: function(pin) {
