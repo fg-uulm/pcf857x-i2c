@@ -1,4 +1,4 @@
-# PCF8574/PCF8575 I2C Driver
+# PCF8574/PCF8575 I2C Driver - modified / mJS
 
 A Mongoose library for PCF857X, a popular and cheap set of GPIO extenders using I2C.
 The PCF8574 is an 8-port device, and the PCF8575 is a 16-port device, but they are
